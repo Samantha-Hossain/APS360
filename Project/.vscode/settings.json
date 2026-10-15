@@ -1,5 +1,6 @@
 {
     "latex-workshop.latex.recipe.default": "pdflatex",
+    "latex-workshop.view.pdf.viewer": "external",
     "latex-workshop.latex.tools": [
         {
             "name": "pdflatex",

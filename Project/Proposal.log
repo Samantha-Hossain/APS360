@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.26)  14 OCT 2026 11:57
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.1.26)  14 OCT 2026 21:37
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -395,7 +395,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
 
-Package natbib Warning: Citation `DBLP:journals/corr/abs-1802-05365' on page 1 undefined on input line 42.
+Package natbib Warning: Citation `DBLP:journals/corr/abs-1802-05365' on page 1 undefined on input line 44.
 
 [1
 
@@ -413,15 +413,15 @@ Package rerunfilecheck Info: File `Proposal.out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 12038 strings out of 467871
- 190824 string characters out of 5417892
- 638893 words of memory out of 5000000
+ 12043 strings out of 467871
+ 190866 string characters out of 5417892
+ 639890 words of memory out of 5000000
  40719 multiletter control sequences out of 15000+600000
- 648356 words of font info for 88 fonts, out of 8000000 for 9000
+ 648618 words of font info for 92 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,8n,79p,1081b,451s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/Lenovo/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmb8a.pfb><C:/Users/Lenovo/AppData/Local/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb>
-Output written on Proposal.pdf (2 pages, 35836 bytes).
+Output written on Proposal.pdf (2 pages, 36477 bytes).
 PDF statistics:
  38 PDF objects out of 1000 (max. 8388607)
  12 named destinations out of 1000 (max. 500000)
