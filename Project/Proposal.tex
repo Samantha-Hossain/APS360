@@ -11,13 +11,14 @@
 \usepackage{nicefrac}       % compact symbols for 1/2, etc.
 \usepackage{microtype}      % microtypography
 \usepackage{xcolor}         % colors
+\usepackage{graphicx}       % figures
  
-\title{Herb Image Classification}
+\title{Culinary Herb Classification Using Transfer Learning}
 
 \author{%
   Samantha Hossain \\
   1008967138, samantha.hossain@utoronto.ca\\
-  Link to Google Colab\\
+  https://github.com/Samantha-Hossain/APS360/tree/main/Project\\
 }
 
 \begin{document}
@@ -27,32 +28,183 @@
 \vspace{-0.5in}
 
 \section*{Introduction}
-As I started getting into gardening, I realized that I was not able to diffrentiate between different types of herbs. 
-I wanted to create a model that could classify different types of herbs based on images. This would be useful for those who just started cooking with herbs, and do not know the difference between all of them to identify herbs quickly and accurately.
+I recently started cooking and growing herbs at home, and as a first-time cook I found it difficult to tell fresh herbs apart. 
+This project aims to develop an image classifier that helps beginner cooks identify common culinary herbs such as basil, bay leaf, dill, rosemary, and green onion. 
+Although these herbs share similar green colours, they differ in leaf shape, texture, stem structure, and growth pattern. 
+Furthermore, the same herb can look very different depending on the angle, lighting, and whether it is photographed as a single leaf or as a bunch. 
+Deep-learning models can learn the distinguishing visual characteristics of herbs to correctly identify them, helping beginner cooks.
 
+The classifier should work on photographs taken in garden and kitchen environments rather than images of isolated herbs with plain backgrounds. 
+To test whether deep learning is needed, this project will compare a fine-tuned ResNet-18 against a Histogram of Oriented Gradients (HOG) with a linear Support Vector Machine (SVM) baseline as shown in Figure \ref{fig:proposal-illustration}.
 \section*{Illustration}
-This is how you can reference Figure \ref{fig:sample}.
-
 \begin{figure}[!h]
   \centering
-  \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-  \caption{Sample figure caption.}
-  \label{fig:sample}
+  \includegraphics[width=0.85\linewidth]{Proposal Illustration.png}
+  \caption{Illustration of the proposed herb image classification system.}
+  \label{fig:proposal-illustration}
 \end{figure}
 
 \section*{Background \& Related Work}
-Do some background research and cite relevant papers. For example, you can cite a paper like this \cite{DBLP:journals/corr/abs-1802-05365}.
+Convolutional neural networks (CNNs) are widely used for herb image classification because they learn visual features such as edges, textures, and shapes directly from images \citep{antunes2025aromatic}. 
+In a systematic review of 31 medicinal-herbs leaf classification studies, 64.5\% of them used CNNs \citep{mulugeta2024review}. 
+Findings showed that a small CNN with two convolution layers reached over 93\% accuracy on 4,067 herb images, where some herbs were visually similar \citep{tan2021herb}.
+
+Since many herb datasets are small, studies often use transfer learning, in which a network pretrained on ImageNet, a large collection of labelled photographs, is adapted to herbs \citep{mulugeta2024review}. 
+Among five pretrained CNNs tested on 1,835 leaf images of 30 species, ResNet50V2 reached 96\% accuracy \citep{raina2026herbal}. 
+In another study on about 12,000 images of 60 herb species, DenseNet121 performed best, with ~83\% validation accuracy \citep{thapa2025herb}. 
+Separate findings show that fine-tuning pretrained models can be unstable, where mixing single leaves with bundles could reduce accuracy \citep{antunes2025aromatic}. 
+Vision Transformers (ViTs), which split an image into patches and relate them through self-attention \citep{dosovitskiy2021vit}, scored lowest in the study by \citet{thapa2025herb}, at about 46\%. 
+This is consistent with the observations in herb-disease work, which found that ViTs usually need large training sets to perform better \citep{li2023pmvt}.
+
+Overall, the results from pretrained CNNs \citep{raina2026herbal,thapa2025herb} support fine-tuning an ImageNet-pretrained ResNet-18 \citep{he2016resnet} rather than training a small custom CNN as in \citet{tan2021herb}.
+Furthermore, there is limited evidence for ViTs on small herb datasets, thus this project will use CNNs. Training-validation gaps \citep{thapa2025herb} and unstable fine-tuning \citep{antunes2025aromatic} motivate validation-based early stopping, data augmentation, averaging over random seeds, and reporting macro-F1 and per-class results.
 
 \section*{Data Processing}
+Images were collected from six public Roboflow Universe datasets: rosemary \citep{smartpot2022rosemary}, dill \citep{yolo2024dill}, green onion \citep{verduras22024greenonion}, basil \citep{chickenduck2024basil}, and bay leaf from two datasets \citep{myproject02024bayleaf,nialieva2024defne}. 
+Roboflow Universe datasets were used as they contained images that showed herbs in varied environments, such as gardens and kitchens, with different angles, backgrounds and arrangements (such as single leaves or bundles), compared to other repos like Mendeley Data which only showed herb leaves in isolation with a plain white background. A model trained only on such images could learn to associate a plain background with a herb instead of learning the herb itself, which defeats the goal of identifying herbs in any environment. 
+
+Only images with fresh target herbs were kept. 
+The rosemary dataset contained images labelled with leaf spot, pest damage or powdery mildew, which were removed, leaving 582 of 1,269 images of fresh rosemary. 
+The other datasets carry no condition labels and were manually checked to contain fresh herbs only. 
+The green onion training split contains Roboflow’s augmented copies, so one copy per original file was kept. 
+Class sizes differ widely (basil 3,482 images and 240 for bay leaf before cleaning), so the largest classes are planned to be randomly reduced to 600 images with a fixed random seed, and a class-weighted loss is planned to be used for the remaining imbalance.
+
+The cleaned images will be split at random into training, validation and test sets (70/15/15), with the same proportion of each class in every set and near-duplicate groups kept together to prevent leakage. 
+Images will be resized to 224x224 and normalized with ImageNet statistics. Random flips, small rotations and mild brightness changes will be applied on the fly to the training images only.
 
 \section*{Architecture}
-
+The primary model is planned to be a CNN, ResNet-18, initialized with weights pretrained on ImageNet \citep{he2016resnet}. 
+Convolutional layers learn filters that detect edges, textures and shapes, and the pretrained weights let the model learn from a limited number of herb images.
+The original 1,000-class output layer will be replaced with a 5-way layer (basil, bay leaf, dill, rosemary, green onion) that outputs one probability per class. 
+The new layer will be trained first, followed by fine-tuning of all layers, using class-weighted cross-entropy loss.
 \section*{Baseline Model}
-
+The baseline is planned to use HOG features \citep{dalal2005hog} fed to a linear SVM. 
+HOG describes an image by the pattern of its edge directions, which reflects the leaf shape and texture that separate herbs. 
+Images will be resized and converted to grayscale before feature extraction, and the SVM will use balanced class weights to account for the unequal class sizes.
 \section*{Ethical Considerations}
-
+The main ethical risk is misuse of the classifier to identify herbs outside a familiar environment. 
+A user could rely on a prediction to decide whether a plant is safe to eat, yet several edible herbs have toxic look-alikes, such as bay leaf and laurel species, or dill and poisonous hemlock. 
+Because the model will only choose among its five culinary classes, an unfamiliar or poisonous plant would still receive a confident, incorrect herb label. 
+Even within culinary herbs, the model will not distinguish fresh from diseased herbs, so its predictions will not indicate whether a herb is safe to cook with.
 \newpage
 \section*{References}
+\renewcommand{\bibsection}{}% heading already given above
+\small
+\begin{thebibliography}{15}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
+\bibitem[Antunes et~al.(2025)Antunes, Divino, Cordeiro, Aguiar, and
+  Okano]{antunes2025aromatic}
+S.~N. Antunes, M.~D. O.~B. Divino, L.~D.~S. Cordeiro, F.~P.~L. Aguiar, and
+  M.~T. Okano.
+\newblock Enhanced classification of aromatic herbs using {EfficientNet} and
+  transfer learning.
+\newblock \emph{IAES International Journal of Artificial Intelligence (IJ-AI)},
+  14\penalty0 (5):\penalty0 4123--4136, 2025.
+\newblock \doi{10.11591/ijai.v14.i5.pp4123-4136}.
 
+\bibitem[{chickenduck}(2024)]{chickenduck2024basil}
+{chickenduck}.
+\newblock basil dataset (v1).
+\newblock Roboflow Universe, 2024.
+\newblock CC BY 4.0.
+  \url{https://universe.roboflow.com/chickenduck/basil-ywlog}.
+
+\bibitem[Dalal and Triggs(2005)]{dalal2005hog}
+N.~Dalal and B.~Triggs.
+\newblock Histograms of oriented gradients for human detection.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition (CVPR)}, volume~1, pages 886--893, 2005.
+
+\bibitem[Dosovitskiy et~al.(2021)Dosovitskiy, Beyer, Kolesnikov, Weissenborn,
+  Zhai, Unterthiner, Dehghani, Minderer, Heigold, Gelly, Uszkoreit, and
+  Houlsby]{dosovitskiy2021vit}
+A.~Dosovitskiy, L.~Beyer, A.~Kolesnikov, D.~Weissenborn, X.~Zhai,
+  T.~Unterthiner, M.~Dehghani, M.~Minderer, G.~Heigold, S.~Gelly, J.~Uszkoreit,
+  and N.~Houlsby.
+\newblock An image is worth 16x16 words: Transformers for image recognition at
+  scale.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2021.
+
+\bibitem[He et~al.(2016)He, Zhang, Ren, and Sun]{he2016resnet}
+K.~He, X.~Zhang, S.~Ren, and J.~Sun.
+\newblock Deep residual learning for image recognition.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition (CVPR)}, pages 770--778, 2016.
+
+\bibitem[Li et~al.(2023)Li, Wang, Zhao, Yuan, and Chang]{li2023pmvt}
+G.~Li, Y.~Wang, Q.~Zhao, P.~Yuan, and B.~Chang.
+\newblock {PMVT}: A lightweight vision transformer for plant disease
+  identification on mobile devices.
+\newblock \emph{Frontiers in Plant Science}, 14:\penalty0 1256773, 2023.
+\newblock \doi{10.3389/fpls.2023.1256773}.
+
+\bibitem[Mulugeta et~al.(2024)Mulugeta, Sharma, and Mesfin]{mulugeta2024review}
+A.~K. Mulugeta, D.~P. Sharma, and A.~H. Mesfin.
+\newblock Deep learning for medicinal plant species classification and
+  recognition: A systematic review.
+\newblock \emph{Frontiers in Plant Science}, 14:\penalty0 1286088, 2024.
+\newblock \doi{10.3389/fpls.2023.1286088}.
+
+\bibitem[{myproject0}(2024)]{myproject02024bayleaf}
+{myproject0}.
+\newblock Bay leaf dataset (v2).
+\newblock Roboflow Universe, 2024.
+\newblock CC BY 4.0.
+  \url{https://universe.roboflow.com/myproject0-j4xvp/bay-leaf}.
+
+\bibitem[{Nialieva}(2024)]{nialieva2024defne}
+{Nialieva}.
+\newblock Bay leaf ({Defne} yarpagi) dataset (v1).
+\newblock Roboflow Universe, 2024.
+\newblock CC BY 4.0.
+  \url{https://universe.roboflow.com/nialieva/bay-leaf-defne-yarpagi}.
+
+\bibitem[Raina et~al.(2026)Raina, Bashir, and Mansotra]{raina2026herbal}
+M.~Raina, U.~Bashir, and V.~Mansotra.
+\newblock Deep learning models for herbal plant leaf classification: A
+  comparative analysis.
+\newblock \emph{Multimedia Tools and Applications}, 85:\penalty0 46, 2026.
+\newblock \doi{10.1007/s11042-026-21338-y}.
+
+\bibitem[{Smart Pot}(2022)]{smartpot2022rosemary}
+{Smart Pot}.
+\newblock Rosemary dataset (v5, final version).
+\newblock Roboflow Universe, 2022.
+\newblock CC BY 4.0.
+  \url{https://universe.roboflow.com/smart-pot/rosemary-yqkfo/dataset/5}.
+
+\bibitem[Tan et~al.(2021)Tan, Lim, and Lee]{tan2021herb}
+J.~W. Tan, K.~M. Lim, and C.~P. Lee.
+\newblock Herb classification with convolutional neural network.
+\newblock In \emph{2021 IEEE 3rd International Conference on Artificial
+  Intelligence in Engineering and Technology (IICAIET)}, Kota Kinabalu,
+  Malaysia, Sept. 2021.
+
+\bibitem[Thapa et~al.(2025)Thapa, Sharma, Nyachhyon, and
+  Pandeya]{thapa2025herb}
+P.~Thapa, M.~Sharma, J.~Nyachhyon, and Y.~R. Pandeya.
+\newblock Local herb identification using transfer learning: A {CNN}-powered
+  mobile application for {Nepalese} flora, 2025.
+
+\bibitem[{verduras2}(2024)]{verduras22024greenonion}
+{verduras2}.
+\newblock greenonion dataset (v1).
+\newblock Roboflow Universe, 2024.
+\newblock CC BY 4.0.
+  \url{https://universe.roboflow.com/verduras2-z9h2o/greenonion-oqwb3}.
+
+\bibitem[{YOLO}(2024)]{yolo2024dill}
+{YOLO}.
+\newblock Dill dataset (v1).
+\newblock Roboflow Universe, 2024.
+\newblock CC BY 4.0.
+  \url{https://universe.roboflow.com/yolo-hhnvd/dill/dataset/1}.
+
+\end{thebibliography}
 \end{document}
